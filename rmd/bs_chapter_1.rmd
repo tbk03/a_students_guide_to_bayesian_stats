@@ -1,0 +1,117 @@
+---
+title: "A Student's Guide to Bayesian Statistics - Chapter 1"
+output: html_notebook
+---
+
+```{r, echo=FALSE}
+library(tidyverse)
+library(tidymodels)
+library(ggplot2)
+```
+
+
+"Suppose that you have been given the data contained in subjective_overfitShort.csv and are asked to find a ‘good’ statistical model to fit the (x,y) data."
+
+```{r}
+short <- read_csv("../data/subjective_overfitShort.csv")
+short
+```
+**Problem 2.3.1.** Fit a linear regression model using least squares.  How reasonable is the fit?
+
+The fit doesn't look great. The model fit looks to be influenced by the two points with relatively high y values.And, looks to fall in the middle of groups of data points: group 1 with relatively small y values; and, group 2 with relatively large y values.
+```{r}
+# plot dataset prior to fitting linear regression model
+p <- ggplot(data = short,
+            mapping = aes(x = x, y = y)
+            )
+
+p + geom_point()
+
+# fit linear regression model - using tidymodels approach
+
+# create a recipe (i.e. define the pre-processing of the data)
+# in this case it is just to define the variables and relationship of interest
+short_rec <- recipe(y ~ x, short)
+short_rec
+
+# create the linear model
+lm_model <- linear_reg() %>% 
+  set_engine("lm")
+
+lm_model
+
+# create the workflow (this brings together the pre-processed data and the model)
+lm_workflow <- workflow() %>% 
+  add_model(lm_model) %>% 
+  add_recipe(short_rec)
+
+lm_workflow
+
+# run the workflow to fit the model to the data
+lm_fit <- fit(lm_workflow, short)
+fitted_mod <- lm_fit %>%  # the model itself is quite a long way down the
+    pluck("fit") %>%      # the hierarchical object created by fitting the workflow
+    pluck("fit") %>% 
+    pluck("fit")
+
+
+# re-plot the original data with the fitted model
+p <- ggplot(data = short,
+            mapping = aes(x = x, y = y)
+            )
+
+p + geom_point() +
+  geom_abline(slope = coef(fitted_mod)[[2]], intercept = coef(fitted_mod)[[1]])
+  
+
+```
+
+**Problem 2.3.2.** Fit a quintic (powers up to the fifth) model to the data.  How does its fit compareto that of the linear model?
+
+It appears more accurate than the linear model, but there is someover fitting going on may be ...
+
+```{r}
+# define the model to be used
+lm_model <- linear_reg() %>% 
+  set_engine("lm")
+
+# fit the model
+lm_form_fit <- lm_model %>% 
+  fit(y ~ poly(x, 5), short)
+
+# predict the values for original x values
+modelled_values <- predict(lm_form_fit, new_data = short %>% select(x))
+
+# join predictions to source data for plotting
+short <- short %>% 
+  bind_cols(modelled_values)
+
+p <- ggplot(data = short,
+            mapping = aes(x = x)
+            )
+
+p + geom_point(mapping = aes(y = y)) +
+  geom_smooth(mapping = aes(y = `.pred`))
+
+```
+Or can it all be done in the plot - let's try for the next question
+
+**Problem 2.3.3.** You are now given new data contained withinsubjective_overfitLong.csv.This contains data on 1000 replications of the same experiment, where thexvalues are held fixed.Using the least squares fits from the first part of this question,  compare the performance of thelinear regression model with that of the quintic model.
+```{r}
+# read in the extended dataset
+long <- read_csv("../data/subjective_overfitLong.csv",
+                 col_names = FALSE) %>% 
+  pivot_longer(cols = X2:X10, names_to = "dummy", values_to = "y") %>% 
+  select(-dummy) %>% 
+  rename(x = X1)
+
+long
+
+modelled_values <- predict(lm_form_fit, long)
+modelled_values
+
+long
+
+
+```
+
