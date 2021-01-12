@@ -1,0 +1,35 @@
+---
+title: "A Student's Guide to Bayesian Statistics - Chapter 3"
+output: html_notebook
+---
+
+```{r}
+library(tidyverse)
+```
+
+
+Question 3.5.1
+
+```{r}
+
+permuations <- function(n, k){
+  #choose(n,k) * factorial(k)
+  exp(lfactorial(n) - lfactorial(n-k))
+}
+
+num_letters <-  3
+num_names <- 26 ** num_letters
+
+dummy_data <- tibble(num_people = 1:500) %>% 
+  mutate(p_shared_name = 1 - permuations(num_names, num_people) / (num_names**num_people))
+dummy_data
+```
+
+```{r}
+p <- ggplot(data = dummy_data,
+            mapping = aes(x = num_people, y = p_shared_name)
+            )
+
+p + geom_line()
+```
+
