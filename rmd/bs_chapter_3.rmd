@@ -32,4 +32,72 @@ p <- ggplot(data = dummy_data,
 
 p + geom_line()
 ```
+Problem 3.8.3
+
+```{r}
+
+library(tidyverse)
+
+
+df = tibble(
+  sensitivity = seq(0,1,0.01),
+  false_positive = 0.08,
+  prev_rare = 0.01,
+  prev_common = 0.1
+)
+
+df %>% 
+  mutate(rare_p_dis_given_pos = (sensitivity * prev_rare) / ((sensitivity * prev_rare) + (false_positive *(1 - prev_rare)))) %>%
+  mutate(common_p_dis_given_pos = (sensitivity * prev_common) / ((sensitivity * prev_common) + (false_positive *(1 - prev_common)))) %>% 
+  
+  pivot_longer(cols = rare_p_dis_given_pos:common_p_dis_given_pos, names_to = "model", values_to = "p") %>% 
+
+  ggplot(mapping = aes(x = sensitivity, y = p, colour = model)) +
+    geom_line()
+```
+```{r}
+df = tibble(
+  sensitivity = 0.9,
+  false_positive = seq(0,1,0.01),
+  prev_rare = 0.01,
+  prev_common = 0.1
+)
+
+df %>% 
+  mutate(rare_p_dis_given_pos = (sensitivity * prev_rare) / ((sensitivity * prev_rare) + (false_positive *(1 - prev_rare)))) %>%
+  mutate(common_p_dis_given_pos = (sensitivity * prev_common) / ((sensitivity * prev_common) + (false_positive *(1 - prev_common)))) %>% 
+  
+  pivot_longer(cols = rare_p_dis_given_pos:common_p_dis_given_pos, names_to = "model", values_to = "p") %>% 
+
+  ggplot(mapping = aes(x = false_positive, y = p, colour = model)) +
+    geom_line()
+```
+
+```{r}
+df = tibble(
+  sensitivity = 0.9,
+  false_positive = 0.8,
+  prev = seq(0,1,0.01)
+)
+
+df %>% 
+  mutate(p_dis_given_pos = (sensitivity * prev) / ((sensitivity * prev) + (false_positive *(1 - prev)))) %>%
+
+  ggplot(mapping = aes(x = prev, y = p_dis_given_pos)) +
+    geom_line()
+```
+Problem 3.8.4
+
+```{r}
+df = tibble(n = 1:10)
+df %>% 
+  mutate(p = (0.01*0.9^n) / ((0.01*0.9^n) + (0.99*0.08^n))
+         ) %>% 
+  
+  ggplot(mapping = aes(x = n, y = p)) +
+  
+  geom_hline(yintercept = 0.99, color = "grey", size = 1) +
+  geom_point()
+  
+```
 
