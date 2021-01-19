@@ -1,0 +1,95 @@
+---
+title: "Chapter 4 Likelihoods"
+output: html_notebook
+---
+
+```{r}
+library(tidyverse)
+```
+
+```{r}
+visits <- read_csv("../data/likelihood_blogVisits.csv",
+         col_names = FALSE) %>% 
+  rename(time_between_visits_mins = X1)
+
+# calculate the mean time between visits in minutes
+mean_time_between_visits <- visits %>% 
+  summarise(mean_time_between_visits = mean(time_between_visits_mins)) %>% 
+  as.numeric()
+
+lambda_data = 1 / mean_time_between_visits
+lambda_data
+
+total_wait_time = sum(visits$time_between_visits_mins)
+
+visits
+```
+```{r}
+
+visits 
+
+tibble(lambda = seq(0, 10, 0.001),
+      n = 50) %>% 
+  
+  mutate(log_likelihood = (n * log(lambda)) - (total_wait_time * lambda)) %>% 
+  
+  ggplot(mapping = aes(x = lambda,
+                       y = log_likelihood)
+         ) +
+  
+  geom_line()
+```
+
+```{r}
+# mle with exponential distribution
+nll <- function(l, data){
+  -sum(dexp(x = data, rate = l, log = TRUE))
+}
+
+mle = optim(par = 1, fn = nll, data = as_vector(visits), method = "BFGS")
+mle$par
+mle
+           
+```
+
+
+```{r}
+visits %>% 
+  
+  # create data from model
+  mutate(model = rexp(50, rate = lambda_data)) %>% 
+  rename(data = time_between_visits_mins) %>% 
+
+  # organise data for plotting 
+  pivot_longer(cols = data:model, values_to = "obs", names_to = "obs_type") %>% 
+  
+  # compare the model with the observed data %>% 
+  ggplot(mapping = aes(x = obs, fill = obs_type)) +
+  geom_histogram(position = "dodge")
+  
+  
+```
+```{r}
+# mle with negative binomial distribution
+nll_neg_binomial <- function(alpha, beta){
+  t <- visits$time_between_visits_mins
+  res <- -sum(log((alpha * ((beta + t) / beta)**(-alpha - 1)) / beta))
+  res
+}
+
+
+stats4::mle(minuslog=nll_neg_binomial, start=list(alpha = 0.2, beta = 1))
+
+```
+```{r}
+alpha <- 2.5288193 
+beta <- 0.9841277
+
+neg_bin_pdf <- function(t){
+  (alpha * ((beta + t) / beta)**(-alpha - 1)) / beta
+}
+
+integrate(neg_bin_pdf, lower = 30, upper = Inf)
+```
+
+
