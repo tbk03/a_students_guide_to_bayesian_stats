@@ -92,4 +92,30 @@ neg_bin_pdf <- function(t){
 integrate(neg_bin_pdf, lower = 30, upper = Inf)
 ```
 
+## Question 2
+
+```{r}
+crime <- read_csv("../data/likelihood_NewYorkCrimeUnemployment.csv") %>% 
+  janitor::clean_names()
+crime
+```
+```{r}
+p <- ggplot(data = crime,
+            mapping = aes(x = population, y = violent_crime_count))
+
+p + geom_point()
+```
+```{r}
+library(skimr)
+
+crime %>% 
+  skim()
+```
+
+```{r}
+
+theta <- 0.004
+
+rpois(62, theta)
+```
 
