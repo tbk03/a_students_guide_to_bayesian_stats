@@ -1,0 +1,51 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(tidyverse)
+
+theme_set(theme_light())
+```
+
+```{r}
+coins <- read_csv("../data/denominator_NBCoins.csv",
+                  col_names = FALSE) %>% 
+  rename(num_fail_before_five_suc = "X1")
+
+p <- ggplot(data = coins,
+            mapping = aes(x = num_fail_before_five_suc))
+
+p + geom_histogram(binwidth = 2)
+```
+
+```{r}
+library(cubature)
+
+f <-  function(x){
+  
+  n <- coins[1]
+  write(n)
+  theta_1 <- x[1]
+  theta_2 <- x[2]
+  X <- 5
+  
+  if (X >= 0){
+    
+    t1 <- choose(n + X - 1, n - 1)
+    t2 <- ((1 - theta_1) * (1 - theta_2) + (theta_1 * theta_2)) ^ n
+    t3 <- (1 - ((1 - theta_1)*(1 - theta_2)) - theta_1 - theta_2) ^ X
+    
+    res <- (t1 * t2 * t3) / 4
+    
+    res
+  }
+  
+  else 0
+  
+}
+
+hcubature(f, lower = c(0,0), upper = c(1,1))
+```
+
