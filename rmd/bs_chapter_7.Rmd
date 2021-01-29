@@ -1,0 +1,41 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(MASS)
+library(tidyverse)
+
+```
+##Problem 7.2
+
+https://www.tidymodels.org/learn/statistics/bootstrap/
+
+```{r}
+posterior <- read_csv("../data/posterior_gdpInfantMortality.csv") %>% 
+  rename(country = X1) %>% 
+  janitor::clean_names() %>% 
+  filter(!is.na(gdp) & !is.na(infant_mortality))
+posterior
+```
+
+
+
+```{r}
+# nlsfit <- nls(mpg ~ k / wt + b, mtcars, start = list(k = 1, b = 0))
+library(tidymodels)
+
+nlsfit <- nls(infant_mortality ~ a + (b * log(gdp)),
+              posterior,
+              start = list(a = 1, b = 0)
+              )
+
+summary(nlsfit)
+
+ggplot(posterior,
+       aes(gdp, infant_mortality)) +
+  geom_point() +
+  geom_line(aes(y = predict(nlsfit)))
+```
+
