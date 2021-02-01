@@ -16,8 +16,8 @@ https://www.tidymodels.org/learn/statistics/bootstrap/
 posterior <- read_csv("../data/posterior_gdpInfantMortality.csv") %>% 
   rename(country = X1) %>% 
   janitor::clean_names() %>% 
-  filter(!is.na(gdp) & !is.na(infant_mortality))
-posterior
+  filter(!is.na(gdp) & !is.na(infant_mortality)) %>% 
+  mutate(across(where(is_numeric), log, .names = "{.col}_log"))
 ```
 
 
@@ -26,7 +26,7 @@ posterior
 # nlsfit <- nls(mpg ~ k / wt + b, mtcars, start = list(k = 1, b = 0))
 library(tidymodels)
 
-nlsfit <- nls(infant_mortality ~ a + (b * log(gdp)),
+nlsfit <- nls(infant_mortality_log ~ a + (b * gdp_log),
               posterior,
               start = list(a = 1, b = 0)
               )
@@ -34,8 +34,32 @@ nlsfit <- nls(infant_mortality ~ a + (b * log(gdp)),
 summary(nlsfit)
 
 ggplot(posterior,
-       aes(gdp, infant_mortality)) +
+       aes(gdp_log, infant_mortality_log)) +
   geom_point() +
   geom_line(aes(y = predict(nlsfit)))
+```
+```{r}
+tidy_nls_fit <- tidy(nlsfit)
+tidy_nls_fit
+```
+```{r}
+
+# extract coefficients from tidied model output
+a_hat <- tidy_nls_fit[[which(tidy_nls_fit$term == "a"), "estimate"]]
+a_se <- tidy_nls_fit[[which(tidy_nls_fit$term == "a"), "std.error"]]
+
+b_hat <- tidy_nls_fit[[which(tidy_nls_fit$term == "b"), "estimate"]]
+b_se <- tidy_nls_fit[[which(tidy_nls_fit$term == "b"), "std.error"]]
+
+# calculate 80% confidence intervals for model coefficients a
+a_ci_80 <- a_hat + (qt(p = c(0.1, 0.9), df = length(posterior) - 2) * a_se)
+a_ci_80
+
+
+# calculate 80% confidence intervals for model coefficent b
+b_ci_80 <- b_hat + (qt(p = c(0.1, 0.9), df = length(posterior) - 2) * b_se)
+b_ci_80
+
+
 ```
 
