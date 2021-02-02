@@ -63,3 +63,58 @@ b_ci_80
 
 ```
 
+7.2.4
+
+```{r}
+posterior_coeff <- read_csv("../data/posterior_posteriorsGdpInfantMortality.csv")
+
+coeffs <- names(posterior_coeff)
+coeffs <- set_names(coeffs)
+
+coeffs
+
+posterior_coeff_histogram <- function(x) {
+  
+  p <- ggplot(data = posterior_coeff,
+              mapping = aes(x = .data[[x]]))
+  
+  p + geom_histogram()
+}
+
+plots <- map(coeffs,  ~ posterior_coeff_histogram(.x))
+
+plots
+
+```
+
+```{r}
+posterior_coeff %>% 
+  map(~ quantile(.x, c(0.1, 0.9)))
+```
+
+7.2.6 Correlations
+```{r}
+correlation_plot <- function(x, y){
+  
+  p <- ggplot(data = posterior_coeff,
+              mapping = aes(x = .data[[x]],
+                            y = .data[[y]]
+                            )
+              )
+  
+  p + geom_point()
+}
+  
+
+map(coeffs, ~ correlation_plot("alpha", .x))
+map(coeffs, ~ correlation_plot("beta", .x))
+map(coeffs, ~ correlation_plot("sigma", .x))
+
+
+```
+7.2.7
+
+```{r}
+posterior
+```
+
