@@ -6,7 +6,7 @@ output: html_notebook
 ```{r}
 library(MASS)
 library(tidyverse)
-
+library(skimr)
 ```
 ##Problem 7.2
 
@@ -115,6 +115,52 @@ map(coeffs, ~ correlation_plot("sigma", .x))
 7.2.7
 
 ```{r}
-posterior
+
+dat <- posterior
+dat
+
+sample_from_prior_predictive <- function(){
+  # create a dataframe of samples from the priors of the model parameters
+  parameter_priors <- tibble(alpha = rnorm(n = 1000, mean = 0, sd = 10),
+                             beta = rnorm(n = 1000, mean = 0, sd = 10),
+                             sigma = abs(rnorm(n = 1000, mean = 0, sd = 5))
+                              )
+  
+  # sample at random a set of parameters (ai, bi, si) from the prior distributions
+  rand_parameter_priors <- parameter_priors %>% 
+    sample_n(1)
+  
+  a <- rand_parameter_priors[[1]]
+  b <- rand_parameter_priors[[2]]
+  s <- rand_parameter_priors[[3]]
+  
+  
+  # sample at random gdp value from the dataset 
+  random_country <- dat %>% 
+    sample_n(1)
+  
+  gdp <- random_country[[1, 'gdp']]
+  
+  # predict infant mortality rate for the sampled country using the sampled parameters (ai, bi, si) 
+  
+  mu <- a + (b * log(gdp))
+  
+  predicted_infant_mortality_rate_log <- rnorm(n = 1, mean = mu, sd = s)
+  predicted_infant_mortality_rate_log
+}
+
+# Generate prior predictive distribution
+num_sims <- 10000
+prior_pred <- tibble(sim_num = 0:num_sims,
+                     prior_pred = map_dbl(sim_num, ~sample_from_prior_predictive()))
+
+# Compare prior predictive distribution with the data that has been collected
+prior_pred %>% 
+  skim(prior_pred)
+
+dat %>% 
+  skim(infant_mortality_log)
 ```
+
+
 
