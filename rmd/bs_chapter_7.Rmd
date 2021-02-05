@@ -119,12 +119,13 @@ map(coeffs, ~ correlation_plot("sigma", .x))
 dat <- posterior
 dat
 
+# create a dataframe of samples from the priors of the model parameters
+parameter_priors <- tibble(alpha = rnorm(n = 10000, mean = 0, sd = 10),
+                           beta = rnorm(n = 10000, mean = 0, sd = 10),
+                           sigma = abs(rnorm(n = 10000, mean = 0, sd = 5))
+                            )
+
 sample_from_prior_predictive <- function(){
-  # create a dataframe of samples from the priors of the model parameters
-  parameter_priors <- tibble(alpha = rnorm(n = 1000, mean = 0, sd = 10),
-                             beta = rnorm(n = 1000, mean = 0, sd = 10),
-                             sigma = abs(rnorm(n = 1000, mean = 0, sd = 5))
-                              )
   
   # sample at random a set of parameters (ai, bi, si) from the prior distributions
   rand_parameter_priors <- parameter_priors %>% 
@@ -161,6 +162,48 @@ prior_pred %>%
 dat %>% 
   skim(infant_mortality_log)
 ```
+Problem 7.2.8. Generate samples from the posterior predictive
+```{r}
 
+sample_var_from_df <-  function(df, variable_name){
+  
+  df %>% 
+    sample_n(1) %>% 
+    select({{variable_name}}) %>%
+    as.double()
+}
+
+infant_mortality_model <-  function(a, b, s, gdp){
+    
+  mu <- a + (b * log(gdp))
+
+  predicted_infant_mortality_rate_log <- rnorm(n = 1, mean = mu, sd = s)
+  predicted_infant_mortality_rate_log
+}
+
+
+sample_from_posterier_prediction <- function(){
+  
+  # sample (ai, bi, si) from posterior parameter distribution
+  a <- sample_var_from_df(posterior_coeff, alpha)
+  b <- sample_var_from_df(posterior_coeff, beta)
+  s <- sample_var_from_df(posterior_coeff, sigma)
+  
+  # sample a gdp at random
+  gdp <- sample_var_from_df(dat, gdp)
+  
+  # calculate predicted infant mortality rate from gdp and ai, bi, si
+  infant_mortality_model(a, b, s, gdp)
+}
+
+# simulate posterior predictive distribution
+num_sims <- 10000
+post_pred <- tibble(sim_num = 0:num_sims,
+                     log_infant_mortality = map_dbl(sim_num, ~ sample_from_posterier_prediction()))
+
+post_pred %>% 
+  skim(log_infant_mortality)
+
+```
 
 
