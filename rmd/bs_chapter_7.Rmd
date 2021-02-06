@@ -205,5 +205,40 @@ post_pred %>%
   skim(log_infant_mortality)
 
 ```
+## Problem 7.2
 
+```{r}
+tumour <- read_csv("../data/posterior_brainData.csv", 
+         col_names = FALSE) %>% 
+  rename(tumour_pos = X1)
+
+tumour %>% skim()
+
+p <- ggplot(data = tumour,
+            mapping = aes(x = tumour_pos))
+
+p + geom_histogram() +
+  scale_x_continuous(breaks = seq(0, 30, 2.5))
+```
+
+```{r}
+theta_mean <- mean(tumour$tumour_pos)
+theta_median <- median(tumour$tumour_pos)
+
+loss_function <- function(t_hat, t){
+  (t_hat - t) ** 3
+}
+
+calculate_loss <- function(theta){
+  
+  tumour %>% 
+    rename(theta_hat = tumour_pos) %>% 
+    add_column(theta = theta) %>% 
+    mutate(loss = loss_function(theta_hat, theta)) %>% 
+    summarise(mean_loss = mean(loss))
+}
+
+calculate_loss(theta_mean)
+calculate_loss(theta_median)
+```
 
