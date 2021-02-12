@@ -1,0 +1,29 @@
+---
+title: "Chapter 8"
+output: html_notebook
+---
+
+```{r echo=FALSE}
+library(tidyverse)
+```
+
+```{r}
+tibble(x = 1:10,
+       gamma = dgamma(1:10, rate = 1, shape = 3)) %>% 
+  ggplot(mapping = aes(x = x,
+                       y = gamma)) +
+  geom_line()
+```
+```{r}
+p <- ggplot() + xlim(-5,5)
+
+p + geom_function(mapping = aes(colour = "normal"),
+                  fun = dnorm) +
+  geom_function(mapping = aes(colour = "t, df = 3"),
+                fun = dt, 
+                args = list(df = 3)) + 
+  geom_function(mapping = aes(colour = "cauchy"),
+                fun = dcauchy)
+
+```
+
