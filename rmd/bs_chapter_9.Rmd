@@ -52,10 +52,113 @@ assert_that(1 == sampling_dist %>%
 ```
 9.1.7
 ```{r}
-ggplot(data = tibble(x = 0:1),
+# ggplot(data = tibble(x = 0:1),
+#        mapping = aes(x = x)) +
+#   stat_function(fun = ~ dbeta(.x, 1, 1)) 
+plot_beta <- function(a, b) {
+  base <- ggplot() + xlim(0,1)
+  base + geom_function(fun = dbeta, args = list(shape1 = a, shape2 = b)) +
+    labs(x = "theta",
+         y = "probability")
+}
+
+plot_beta(1,1)
+```
+# 9.1.8
+As a increases the mass of the distribution shifts to the right
+```{r}
+# varying a
+map(seq(from = 0, to = 2, by = 0.5), ~plot_beta(.x,1))
+
+# varying b
+map(seq(from = 0, to = 2, by = 0.5), ~plot_beta(1,.x))
+```
+
+## 9.1.10
+
+posterier = beta(X+a,10−X+b) 
+```{r}
+
+plot_posterior <- function(x, n, a, b){
+
+  base <- ggplot() + xlim(0,1)
+    base + geom_function(fun = dbeta, args = list(shape1 = x + a, shape2 = n - x + b)) +
+      labs(x = "theta",
+           y = "probability")
+}
+
+plot_posterior(x = 1, n = 10, a = 1, b = 1)
+```
+## 9.1.11
+```{r}
+plot_posterior(x = 7, n = 100, a = 1, b = 1)
+```
+## 9.1.12
+```{r}
+plot_posterior(x = 11, n = 200, a = 1, b = 1)
+```
+#9.1.13
+```{r}
+sample_theta_from_posterior <- function(x, n, a, b){
+  rbeta(1, shape1 = x + a, shape2 = n - x + b)
+}
+
+sample_x_from_binomial <- function(theta, sample_size){
+  rbinom(1, sample_size, theta)
+}
+
+# generate posterior predictive distribution 
+# *******************************************
+
+# # sample from posterior
+# theta <- sample_theta_from_posterior(x = 11, n = 200, a = 1, b = 1)
+# 
+# # sample x from binomial
+# sample_x_from_binomial(theta, 100)
+
+num_samples <- 10000
+posterior_predictive <- tibble(sample_num = 1:num_samples,
+                               theta = map_dbl(sample_num, ~sample_theta_from_posterior(x = 11, n = 200, a = 1, b = 1)),
+                               x = map_dbl(theta, ~sample_x_from_binomial(theta, 100))
+                               )
+ggplot(data = posterior_predictive,
        mapping = aes(x = x)) +
-  stat_function(fun = ~ dbeta(.x, 1.5, 1)) +
-  labs(x = "theta",
-       y = "probability")
+  geom_histogram(binwidth = 1)
+```
+#9.1.15
+```{r}
+sample_theta_squared_from_uniform <- function(){
+  theta <- rbeta(1, 1, 1)
+  theta**2
+}
+
+num_samples <- 10000
+theta_squared_sampling_dist <- tibble(sample_num = 1:num_samples,
+                                      theta_squared = map_dbl(sample_num, ~sample_theta_squared_from_uniform()
+                                                              )
+                                      )
+
+ggplot(data = theta_squared_sampling_dist,
+       mapping = aes(x = theta_squared)) +
+  geom_histogram(binwidth = 0.01)
+```
+## 9.2
+```{r}
+conjugate_epil <- read_csv("../data/conjugate_epil.csv")
+conjugate_epil
+```
+
+```{r}
+
+total_episodes <- sum(conjugate_epil$x)
+num_participants <- length(conjugate_epil$x)
+a_prior <- 4
+b_prior <- 0.25
+
+a_post <- a_prior + total_episodes
+b_post <- b_prior + num_participants
+
+base <- ggplot() + xlim(0, 25)
+base + geom_function(fun = dgamma, args = list(shape = a_post, rate = b_post))
 ```
 
