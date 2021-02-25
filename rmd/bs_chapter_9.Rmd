@@ -161,4 +161,20 @@ b_post <- b_prior + num_participants
 base <- ggplot() + xlim(0, 25)
 base + geom_function(fun = dgamma, args = list(shape = a_post, rate = b_post))
 ```
+9.2.5
+```{r}
+
+s = total_episodes + a_prior
+p = b_prior + num_participants
+
+posterior_predictive <- tibble(x = 0:20, 
+                               y = map_dbl(x, ~ dnbinom(.x, mu = p, size = s)))
+
+base <- ggplot(posterior_predictive, aes(x,y))
+base + geom_point()
+```
+9.3
+```{r}
+conjugate_light <- read_csv("../data/conjugate_newcomb.csv")
+```
 
